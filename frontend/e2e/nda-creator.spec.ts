@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, Page, test } from "@playwright/test";
 import fs from "node:fs";
 import { PDFParse } from "pdf-parse";
 
@@ -15,17 +15,43 @@ async function extractPdfText(filePath: string): Promise<string> {
   }
 }
 
-async function fillCompleteForm(page: import("@playwright/test").Page) {
-  await page.getByLabel("Legal name").nth(0).fill("Acme Robotics, Inc.");
-  await page.getByLabel("Address").nth(0).fill("500 Market St, San Francisco, CA 94105");
-  await page.getByLabel("Legal name").nth(1).fill("Beta Innovations LLC");
-  await page.getByLabel("Address").nth(1).fill("200 Elm Ave, Austin, TX 73301");
-  await page.getByLabel("Effective date").fill("2026-09-01");
-  await page
-    .getByLabel("Purpose of disclosure")
-    .fill("evaluating a potential joint product integration");
-  await page.getByLabel("Term (years)").fill("2");
-  await page.getByLabel("Governing state").fill("Delaware");
+interface NdaFieldsWire {
+  partyA: { name: string; address: string };
+  partyB: { name: string; address: string };
+  effectiveDate: string;
+  purpose: string;
+  termYears: string;
+  governingState: string;
+}
+
+const completeFields: NdaFieldsWire = {
+  partyA: { name: "Acme Robotics, Inc.", address: "500 Market St, San Francisco, CA 94105" },
+  partyB: { name: "Beta Innovations LLC", address: "200 Elm Ave, Austin, TX 73301" },
+  effectiveDate: "2026-09-01",
+  purpose: "evaluating a potential joint product integration",
+  termYears: "2",
+  governingState: "Delaware",
+};
+
+// Queues up canned /api/nda-chat/message responses (mocked so these tests
+// are deterministic and don't depend on a real OPENROUTER_API_KEY/network
+// call); each chat turn consumes the next response in order, repeating the
+// last one if the test sends more turns than were queued.
+async function mockChatResponses(
+  page: Page,
+  responses: { reply: string; fields: NdaFieldsWire }[]
+) {
+  let call = 0;
+  await page.route("**/api/nda-chat/message", async (route) => {
+    const response = responses[Math.min(call, responses.length - 1)];
+    call++;
+    await route.fulfill({ json: response });
+  });
+}
+
+async function sendChatMessage(page: Page, text: string) {
+  await page.getByLabel("Message").fill(text);
+  await page.getByRole("button", { name: "Send" }).click();
 }
 
 test.describe("Mutual NDA Creator", () => {
@@ -40,7 +66,7 @@ test.describe("Mutual NDA Creator", () => {
     });
   });
 
-  test("renders the empty form with placeholders and a disabled download button", async ({
+  test("renders the chat greeting and a disabled download button before any fields are known", async ({
     page,
   }) => {
     await page.goto("/");
@@ -51,46 +77,59 @@ test.describe("Mutual NDA Creator", () => {
     ).toBeDisabled();
   });
 
-  test("live preview reflects form input as the user types", async ({ page }) => {
+  test("live preview reflects fields returned by the chat", async ({ page }) => {
+    await mockChatResponses(page, [
+      {
+        reply: "Got it, what's Party B's name?",
+        fields: { ...completeFields, partyB: { name: "", address: "" } },
+      },
+    ]);
     await page.goto("/");
-    await page.getByLabel("Legal name").nth(0).fill("Acme Robotics, Inc.");
+    await sendChatMessage(page, "Party A is Acme Robotics, Inc.");
 
+    await expect(page.getByText("Got it, what's Party B's name?")).toBeVisible();
     await expect(page.getByText("Acme Robotics, Inc.").first()).toBeVisible();
     await expect(page.getByText("[Party A Name]")).not.toBeVisible();
   });
 
-  test("enables download only once every field is filled, and disables again if one is cleared", async ({
+  test("enables download only once every field is known, and disables again if a later reply regresses one", async ({
     page,
   }) => {
+    await mockChatResponses(page, [
+      { reply: "All set!", fields: completeFields },
+      { reply: "Sure, what's the new governing state?", fields: { ...completeFields, governingState: "" } },
+    ]);
     await page.goto("/");
     const downloadButton = page.getByRole("button", { name: "Download NDA as PDF" });
 
-    await fillCompleteForm(page);
+    await sendChatMessage(page, "Here are all the details.");
+    await expect(page.getByText("All set!")).toBeVisible();
     await expect(downloadButton).toBeEnabled();
 
-    await page.getByLabel("Governing state").fill("");
+    await sendChatMessage(page, "Actually, let's change the governing state.");
+    await expect(page.getByText("Sure, what's the new governing state?")).toBeVisible();
     await expect(downloadButton).toBeDisabled();
   });
 
   test("does not enable download for a zero or negative term", async ({ page }) => {
+    await mockChatResponses(page, [
+      { reply: "Zero years, got it.", fields: { ...completeFields, termYears: "0" } },
+    ]);
     await page.goto("/");
     const downloadButton = page.getByRole("button", { name: "Download NDA as PDF" });
 
-    await fillCompleteForm(page);
-    await expect(downloadButton).toBeEnabled();
-
-    await page.getByLabel("Term (years)").fill("0");
-    await expect(downloadButton).toBeDisabled();
-
-    await page.getByLabel("Term (years)").fill("-3");
+    await sendChatMessage(page, "Make the term zero years.");
+    await expect(page.getByText("Zero years, got it.")).toBeVisible();
     await expect(downloadButton).toBeDisabled();
   });
 
-  test("downloads a PDF named mutual-nda.pdf whose content matches the form", async ({
+  test("downloads a PDF named mutual-nda.pdf whose content matches the chat-provided fields", async ({
     page,
   }) => {
+    await mockChatResponses(page, [{ reply: "All set!", fields: completeFields }]);
     await page.goto("/");
-    await fillCompleteForm(page);
+    await sendChatMessage(page, "Here are all the details.");
+    await expect(page.getByText("All set!")).toBeVisible();
 
     const [download] = await Promise.all([
       page.waitForEvent("download"),
@@ -116,13 +155,21 @@ test.describe("Mutual NDA Creator", () => {
   });
 
   test("handles very long party names and addresses without erroring", async ({ page }) => {
-    await page.goto("/");
     const longName = "A".repeat(200);
     const longAddress = "1 Some Very Long Street Name Avenue, ".repeat(10);
+    await mockChatResponses(page, [
+      {
+        reply: "Got it.",
+        fields: {
+          ...completeFields,
+          partyA: { name: longName, address: longAddress },
+        },
+      },
+    ]);
+    await page.goto("/");
+    await sendChatMessage(page, "Party A's name is very long.");
 
-    await page.getByLabel("Legal name").nth(0).fill(longName);
-    await page.getByLabel("Address").nth(0).fill(longAddress);
-
+    await expect(page.getByText("Got it.")).toBeVisible();
     await expect(page.getByText(longName, { exact: true }).first()).toBeVisible();
     await expect(page.locator("body")).not.toContainText("undefined");
   });
@@ -130,10 +177,19 @@ test.describe("Mutual NDA Creator", () => {
   test("Cyrillic/Greek party names render correctly in both the preview and the downloaded PDF", async ({
     page,
   }) => {
+    await mockChatResponses(page, [
+      {
+        reply: "All set!",
+        fields: {
+          ...completeFields,
+          partyA: { ...completeFields.partyA, name: "ООО Ромашка" },
+          partyB: { ...completeFields.partyB, name: "Ελληνική Εταιρεία" },
+        },
+      },
+    ]);
     await page.goto("/");
-    await fillCompleteForm(page);
-    await page.getByLabel("Legal name").nth(0).fill("ООО Ромашка");
-    await page.getByLabel("Legal name").nth(1).fill("Ελληνική Εταιρεία");
+    await sendChatMessage(page, "Here are all the details.");
+    await expect(page.getByText("All set!")).toBeVisible();
 
     await expect(page.getByText("ООО Ромашка").first()).toBeVisible();
     await expect(page.getByText("Ελληνική Εταιρεία").first()).toBeVisible();
@@ -155,9 +211,18 @@ test.describe("Mutual NDA Creator", () => {
   test("warns (without blocking download) when the PDF font can't render a character, e.g. CJK", async ({
     page,
   }) => {
+    await mockChatResponses(page, [
+      {
+        reply: "All set!",
+        fields: {
+          ...completeFields,
+          partyA: { ...completeFields.partyA, name: "北京示例有限公司" },
+        },
+      },
+    ]);
     await page.goto("/");
-    await fillCompleteForm(page);
-    await page.getByLabel("Legal name").nth(0).fill("北京示例有限公司");
+    await sendChatMessage(page, "Here are all the details.");
+    await expect(page.getByText("All set!")).toBeVisible();
 
     await expect(page.getByText("北京示例有限公司").first()).toBeVisible();
     await expect(
