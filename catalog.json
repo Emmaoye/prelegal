@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Mutual Non-Disclosure Agreement",
+    "description": "A mutual NDA for protecting confidential information exchanged between two parties, created by Common Paper.",
+    "filename": "Mutual-NDA.md"
+  },
+  {
+    "name": "Cloud Service Agreement",
+    "description": "A standard agreement for selling and buying cloud software and SaaS products, created by Common Paper.",
+    "filename": "CSA.md"
+  },
+  {
+    "name": "Design Partner Agreement",
+    "description": "An agreement for engaging a design partner to collaborate on and provide feedback for a product still in development, created by Common Paper.",
+    "filename": "Design-Partner-Agreement.md"
+  },
+  {
+    "name": "Service Level Agreement",
+    "description": "An agreement defining service level commitments, intended to be used alongside the Common Paper Cloud Service Agreement (CSA).",
+    "filename": "SLA.md"
+  },
+  {
+    "name": "Professional Services Agreement",
+    "description": "A standard agreement for engaging a vendor to perform professional services, such as consulting, implementation, or custom development work.",
+    "filename": "PSA.md"
+  },
+  {
+    "name": "Data Processing Agreement",
+    "description": "An agreement governing the processing of personal data between a data controller and a data processor, created by Common Paper.",
+    "filename": "DPA.md"
+  },
+  {
+    "name": "Software License Agreement",
+    "description": "A standard agreement for licensing on-premise or self-hosted software, created by Common Paper.",
+    "filename": "Software-License-Agreement.md"
+  },
+  {
+    "name": "Partnership Agreement",
+    "description": "A standard agreement for structuring a business partnership between two companies, created by Common Paper.",
+    "filename": "Partnership-Agreement.md"
+  },
+  {
+    "name": "Business Associate Agreement",
+    "description": "An agreement governing the handling of protected health information (PHI) between a covered entity and a business associate under HIPAA, created by Common Paper.",
+    "filename": "BAA.md"
+  },
+  {
+    "name": "Pilot Agreement",
+    "description": "A short-term agreement allowing a prospective customer to trial or evaluate a product or service before committing to a longer-term deal, created by Common Paper.",
+    "filename": "Pilot-Agreement.md"
+  },
+  {
+    "name": "AI Addendum",
+    "description": "An addendum for governing the use of artificial intelligence features within another commercial agreement, created by Common Paper.",
+    "filename": "AI-Addendum.md"
+  }
+]
