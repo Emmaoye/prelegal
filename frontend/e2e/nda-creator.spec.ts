@@ -29,6 +29,17 @@ async function fillCompleteForm(page: import("@playwright/test").Page) {
 }
 
 test.describe("Mutual NDA Creator", () => {
+  test.beforeEach(async ({ page }) => {
+    // The NDA creator lives behind the fake login gate; seed a logged-in
+    // user so these tests can focus on NDA behavior rather than login.
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "prelegal_user",
+        JSON.stringify({ id: 1, email: "e2e@example.com" })
+      );
+    });
+  });
+
   test("renders the empty form with placeholders and a disabled download button", async ({
     page,
   }) => {

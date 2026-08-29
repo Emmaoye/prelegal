@@ -6,14 +6,26 @@ import NdaForm from "@/components/NdaForm";
 import NdaPreview from "@/components/NdaPreview";
 import { emptyNdaFormData, isNdaFormComplete, NdaFormData } from "@/lib/types";
 import { ndaFormHasUnsupportedPdfCharacters } from "@/lib/pdf-font-support";
+import { useAuthGate, useLogout } from "@/lib/useAuthGate";
 
 export default function Home() {
+  const user = useAuthGate();
+  const logout = useLogout();
   const [formData, setFormData] = useState<NdaFormData>(emptyNdaFormData);
   const complete = isNdaFormComplete(formData);
   const hasUnsupportedCharacters = ndaFormHasUnsupportedPdfCharacters(formData);
 
+  if (!user) return null;
+
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
+      <div className="mb-4 flex justify-end text-xs text-gray-500">
+        Signed in as {user.email} ·{" "}
+        <button type="button" onClick={logout} className="ml-1 underline hover:text-gray-700">
+          Log out
+        </button>
+      </div>
+
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Mutual NDA Creator</h1>
         <p className="mt-1 text-sm text-gray-600">

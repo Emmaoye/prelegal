@@ -12,7 +12,9 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "npm run build && npm run start -- -p 3100",
+    // The app is served in production as a static export (see next.config.ts),
+    // so exercise that same build here rather than the Next.js dev/prod server.
+    command: "npm run build && npx serve out -l 3100",
     url: "http://localhost:3100",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

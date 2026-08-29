@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Home from "./page";
+import { setStoredUser } from "@/lib/auth";
 
 vi.mock("@react-pdf/renderer", () => ({
   pdf: vi.fn(() => ({ toBlob: vi.fn().mockResolvedValue(new Blob()) })),
@@ -13,7 +14,19 @@ vi.mock("@react-pdf/renderer", () => ({
   Font: { register: vi.fn() },
 }));
 
+// Next's useRouter returns a stable object across renders; the mock must
+// too, or a component that depends on it in a useEffect dependency array
+// (like useAuthGate) will re-run that effect every render.
+const router = { push: vi.fn(), replace: vi.fn() };
+vi.mock("next/navigation", () => ({
+  useRouter: () => router,
+}));
+
 describe("Home page", () => {
+  beforeEach(() => {
+    setStoredUser({ id: 1, email: "test@example.com" });
+  });
+
   it("keeps the download button disabled until every field is filled", async () => {
     const user = userEvent.setup();
     render(<Home />);
