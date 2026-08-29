@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { pdf } from "@react-pdf/renderer";
-import { NdaFormData } from "@/lib/types";
-import NdaPdfDocument from "./NdaPdfDocument";
+import { DocumentFields, RenderedDocument } from "@/lib/document-types";
+import DocumentPdfDocument from "./DocumentPdfDocument";
 
-export default function DownloadNdaButton({
-  data,
-  disabled,
+export default function DownloadDocumentButton({
+  document,
+  fields,
 }: {
-  data: NdaFormData;
-  disabled?: boolean;
+  document: RenderedDocument;
+  fields: DocumentFields;
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(false);
@@ -19,15 +19,18 @@ export default function DownloadNdaButton({
     setIsGenerating(true);
     setError(false);
     try {
-      const blob = await pdf(<NdaPdfDocument data={data} />).toBlob();
+      const blob = await pdf(<DocumentPdfDocument document={document} fields={fields} />).toBlob();
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      // Named `documentWindow` (not `document`) to avoid shadowing the
+      // global DOM `document` with this component's `document` prop.
+      const documentWindow = window.document;
+      const link = documentWindow.createElement("a");
       link.href = url;
-      link.download = "mutual-nda.pdf";
+      link.download = `${document.slug}.pdf`;
       link.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Failed to generate NDA PDF", err);
+      console.error("Failed to generate document PDF", err);
       setError(true);
     } finally {
       setIsGenerating(false);
@@ -39,10 +42,10 @@ export default function DownloadNdaButton({
       <button
         type="button"
         onClick={handleDownload}
-        disabled={disabled || isGenerating}
+        disabled={isGenerating}
         className="inline-flex items-center justify-center rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isGenerating ? "Generating PDF…" : "Download NDA as PDF"}
+        {isGenerating ? "Generating PDF…" : `Download ${document.name} as PDF`}
       </button>
       {error && (
         <p role="alert" className="mt-2 text-xs text-red-600">

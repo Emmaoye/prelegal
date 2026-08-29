@@ -1,17 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { ChatMessage } from "@/lib/nda-chat-api";
+import { useEffect, useRef, useState } from "react";
+import { ChatMessage } from "@/lib/document-chat-api";
 
-interface NdaChatProps {
+interface DocumentChatProps {
   messages: ChatMessage[];
   isSending: boolean;
   error: string | null;
   onSend: (text: string) => void;
 }
 
-export default function NdaChat({ messages, isSending, error, onSend }: NdaChatProps) {
+export default function DocumentChat({ messages, isSending, error, onSend }: DocumentChatProps) {
   const [draft, setDraft] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // The input is disabled while a request is in flight (below), so focus is
+  // lost to the document body once that happens - restore it as soon as the
+  // input becomes enabled again, right when the assistant's reply arrives.
+  useEffect(() => {
+    if (!isSending) inputRef.current?.focus();
+  }, [isSending]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,6 +52,7 @@ export default function NdaChat({ messages, isSending, error, onSend }: NdaChatP
 
       <form onSubmit={handleSubmit} className="flex gap-2 border-t border-gray-200 p-3">
         <input
+          ref={inputRef}
           type="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
