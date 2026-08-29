@@ -1,0 +1,12 @@
+.git
+.claude
+.env
+**/node_modules
+**/.next
+frontend/out
+**/__pycache__
+**/.venv
+**/*.pyc
+**/.pytest_cache
+**/*.db
+**/*.sqlite3
