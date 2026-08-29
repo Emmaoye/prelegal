@@ -37,7 +37,7 @@ export default function DocumentChat({ messages, isSending, error, onSend }: Doc
             className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
               message.role === "assistant"
                 ? "self-start bg-gray-100 text-gray-900"
-                : "self-end bg-[#209dd7] text-white"
+                : "self-end bg-brand-blue text-white"
             }`}
           >
             {message.content}
@@ -59,12 +59,12 @@ export default function DocumentChat({ messages, isSending, error, onSend }: Doc
           disabled={isSending}
           placeholder="Type your answer…"
           aria-label="Message"
-          className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#209dd7] focus:outline-none focus:ring-1 focus:ring-[#209dd7] disabled:bg-gray-100"
+          className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue disabled:bg-gray-100"
         />
         <button
           type="submit"
           disabled={isSending || !draft.trim()}
-          className="inline-flex items-center justify-center rounded-md bg-[#753991] px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#5f2e75] disabled:cursor-not-allowed disabled:bg-gray-300"
+          className="inline-flex items-center justify-center rounded-md bg-brand-purple px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-purple-hover disabled:cursor-not-allowed disabled:bg-gray-300"
         >
           Send
         </button>

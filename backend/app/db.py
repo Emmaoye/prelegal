@@ -36,3 +36,28 @@ def init_db() -> None:
             )
             """
         )
+        connection.execute("DROP TABLE IF EXISTS sessions")
+        connection.execute(
+            """
+            CREATE TABLE sessions (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                expires_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute("DROP TABLE IF EXISTS documents")
+        connection.execute(
+            """
+            CREATE TABLE documents (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                document_type TEXT NOT NULL,
+                document_name TEXT NOT NULL,
+                fields TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )

@@ -12,7 +12,7 @@ function RunView({ run }: { run: Run }) {
   }
   if (run.type === "link") {
     return (
-      <a href={run.href} className={`text-[#209dd7] underline ${run.bold ? "font-semibold" : ""}`}>
+      <a href={run.href} className={`text-brand-blue underline ${run.bold ? "font-semibold" : ""}`}>
         {run.text}
       </a>
     );
@@ -49,9 +49,13 @@ export default function DocumentPreview({
 
   return (
     <article className="text-sm leading-relaxed text-gray-800">
-      <h1 className="mb-6 text-center text-lg font-bold uppercase tracking-wide text-gray-900">
+      <h1 className="mb-4 text-center text-lg font-bold uppercase tracking-wide text-gray-900">
         {document.name}
       </h1>
+
+      <p className="mb-6 rounded-md border border-brand-yellow/50 bg-brand-yellow/10 px-4 py-3 text-xs font-medium text-brand-navy">
+        {DOCUMENT_DISCLAIMER}
+      </p>
 
       {document.blocks.map((block, index) => (
         <BlockView key={index} block={block} />
@@ -71,9 +75,6 @@ export default function DocumentPreview({
         ))}
       </div>
 
-      <p className="mt-10 border-t border-gray-200 pt-4 text-xs text-gray-400">
-        {DOCUMENT_DISCLAIMER}
-      </p>
     </article>
   );
 }

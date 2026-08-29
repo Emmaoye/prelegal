@@ -1,7 +1,7 @@
 import { DocumentFields, FieldRun } from "@/lib/document-types";
 
 export const DOCUMENT_DISCLAIMER =
-  "This document is a generic template provided for informational purposes only. It does not constitute legal advice and should be reviewed by a qualified attorney before use.";
+  "Draft document - for informational purposes only. This is not legal advice and must be reviewed by a qualified attorney before use.";
 
 /** The value to display for a field run: its known value, or the original
  * template label bracketed as a placeholder, with the possessive suffix

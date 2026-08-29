@@ -2,24 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AuthUser, clearStoredUser, getStoredUser } from "@/lib/auth";
+import { AuthUser, getCurrentUser, logout } from "@/lib/auth";
 
-/** Redirects to /login when no fake-authenticated user is stored, otherwise
- * returns that user. Returns null (and renders nothing) while redirecting.
- * localStorage isn't available at prerender time, so this has to read it
- * after mount rather than during the initial render. */
+/** Redirects to /login when there's no valid session, otherwise returns the
+ * signed-in user. Returns null (and renders nothing) while checking or
+ * redirecting - the session cookie can only be verified by asking the
+ * server, so this can't resolve synchronously during the initial render. */
 export function useAuthGate(): AuthUser | null {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
-    const stored = getStoredUser();
-    if (!stored) {
-      router.replace("/login");
-      return;
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing from localStorage, which isn't readable until after mount
-    setUser(stored);
+    let cancelled = false;
+    getCurrentUser().then((current) => {
+      if (cancelled) return;
+      if (!current) {
+        router.replace("/login");
+        return;
+      }
+      setUser(current);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   return user;
@@ -28,7 +33,6 @@ export function useAuthGate(): AuthUser | null {
 export function useLogout(): () => void {
   const router = useRouter();
   return () => {
-    clearStoredUser();
-    router.push("/login");
+    logout().finally(() => router.push("/login"));
   };
 }

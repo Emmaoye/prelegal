@@ -21,6 +21,7 @@ export interface UseDocumentChatResult {
 }
 
 export function useDocumentChat(): UseDocumentChatResult {
+  const [conversationId] = useState(() => crypto.randomUUID());
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
   const [documentType, setDocumentType] = useState<string | null>(null);
   const [documentName, setDocumentName] = useState<string | null>(null);
@@ -39,7 +40,7 @@ export function useDocumentChat(): UseDocumentChatResult {
     setError(null);
 
     try {
-      const result = await sendChatMessage(nextMessages, documentType, fields);
+      const result = await sendChatMessage(nextMessages, documentType, fields, conversationId);
       setDocumentType(result.documentType);
       setDocumentName(result.documentName);
       setFields(result.fields);

@@ -3,11 +3,25 @@
 :root {
   --background: #f9fafb;
   --foreground: #171717;
+
+  /* Brand palette - see CLAUDE.md "Color Scheme". */
+  --color-brand-yellow: #ecad0a;
+  --color-brand-blue: #209dd7;
+  --color-brand-purple: #753991;
+  --color-brand-purple-hover: #5f2e75;
+  --color-brand-navy: #032147;
+  --color-brand-gray: #888888;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-yellow: var(--color-brand-yellow);
+  --color-brand-blue: var(--color-brand-blue);
+  --color-brand-purple: var(--color-brand-purple);
+  --color-brand-purple-hover: var(--color-brand-purple-hover);
+  --color-brand-navy: var(--color-brand-navy);
+  --color-brand-gray: var(--color-brand-gray);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

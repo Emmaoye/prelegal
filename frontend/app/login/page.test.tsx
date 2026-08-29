@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import LoginPage from "./page";
-import { getStoredUser } from "@/lib/auth";
 
 const push = vi.fn();
 const router = { push, replace: vi.fn() };
@@ -14,7 +13,6 @@ vi.mock("next/navigation", () => ({
 describe("Login page", () => {
   beforeEach(() => {
     push.mockClear();
-    window.localStorage.clear();
     vi.stubGlobal("fetch", vi.fn());
   });
 
@@ -38,7 +36,6 @@ describe("Login page", () => {
       "/api/auth/signin",
       expect.objectContaining({ method: "POST" })
     );
-    expect(getStoredUser()).toEqual({ id: 1, email: "a@example.com" });
     expect(push).toHaveBeenCalledWith("/");
   });
 
@@ -65,7 +62,7 @@ describe("Login page", () => {
   it("shows an error and does not redirect when the request fails", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: false,
-      json: async () => ({ detail: "No account found for this email" }),
+      json: async () => ({ detail: "Incorrect email or password" }),
     });
     const user = userEvent.setup();
     render(<LoginPage />);
@@ -74,10 +71,7 @@ describe("Login page", () => {
     await user.type(screen.getByLabelText("Password"), "hunter2");
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "No account found for this email"
-    );
+    expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect email or password");
     expect(push).not.toHaveBeenCalled();
-    expect(getStoredUser()).toBeNull();
   });
 });
