@@ -7,7 +7,7 @@ test.describe("Fake login gate", () => {
     await expect(page.getByRole("heading", { name: "Prelegal" })).toBeVisible();
   });
 
-  test("signs up, lands on the NDA creator, and can log out", async ({ page }) => {
+  test("signs up, lands on the document creator, and can log out", async ({ page }) => {
     await page.route("**/api/auth/signup", async (route) => {
       await route.fulfill({
         status: 201,
@@ -23,7 +23,7 @@ test.describe("Fake login gate", () => {
     await page.getByRole("button", { name: "Create account" }).click();
 
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("heading", { name: "Mutual NDA Creator" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Document Creator" })).toBeVisible();
     await expect(page.getByText("Signed in as new@example.com")).toBeVisible();
 
     await page.getByRole("button", { name: "Log out" }).click();

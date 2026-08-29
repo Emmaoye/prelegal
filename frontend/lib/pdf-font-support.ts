@@ -1,7 +1,7 @@
-import { NdaFormData } from "./types";
+import { DocumentFields } from "./document-types";
 
 // Unicode blocks covered by the Noto Sans build registered in
-// NdaPdfDocument.tsx (Latin, Latin Extended, Greek, Cyrillic, Vietnamese,
+// DocumentPdfDocument.tsx (Latin, Latin Extended, Greek, Cyrillic, Vietnamese,
 // plus common punctuation/currency). Characters outside these ranges - CJK,
 // Arabic, Hebrew, Thai, etc. - have no glyph in that font and would
 // otherwise render as garbled or missing text in the downloaded PDF.
@@ -28,13 +28,6 @@ export function hasUnsupportedPdfCharacters(text: string): boolean {
   return false;
 }
 
-export function ndaFormHasUnsupportedPdfCharacters(data: NdaFormData): boolean {
-  return [
-    data.partyA.name,
-    data.partyA.address,
-    data.partyB.name,
-    data.partyB.address,
-    data.purpose,
-    data.governingState,
-  ].some(hasUnsupportedPdfCharacters);
+export function documentFieldsHaveUnsupportedPdfCharacters(fields: DocumentFields): boolean {
+  return Object.values(fields).some(hasUnsupportedPdfCharacters);
 }

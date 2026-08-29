@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  documentFieldsHaveUnsupportedPdfCharacters,
   hasUnsupportedPdfCharacters,
-  ndaFormHasUnsupportedPdfCharacters,
 } from "./pdf-font-support";
-import { emptyNdaFormData, NdaFormData } from "./types";
 
 describe("hasUnsupportedPdfCharacters", () => {
   it("is false for plain ASCII", () => {
@@ -43,33 +42,28 @@ describe("hasUnsupportedPdfCharacters", () => {
   });
 });
 
-describe("ndaFormHasUnsupportedPdfCharacters", () => {
-  it("is false for the empty form", () => {
-    expect(ndaFormHasUnsupportedPdfCharacters(emptyNdaFormData)).toBe(false);
+describe("documentFieldsHaveUnsupportedPdfCharacters", () => {
+  it("is false for an empty fields object", () => {
+    expect(documentFieldsHaveUnsupportedPdfCharacters({})).toBe(false);
   });
 
-  it("is true when only the Party B address contains unsupported characters", () => {
-    const data: NdaFormData = {
-      ...emptyNdaFormData,
-      partyB: { ...emptyNdaFormData.partyB, address: "東城区123号" },
-    };
-    expect(ndaFormHasUnsupportedPdfCharacters(data)).toBe(true);
+  it("is true when only one field contains unsupported characters", () => {
+    expect(
+      documentFieldsHaveUnsupportedPdfCharacters({ party_a_name: "Acme Inc.", party_b_address: "東城区123号" })
+    ).toBe(true);
   });
 
   it("is true when the purpose field contains unsupported characters", () => {
-    const data: NdaFormData = { ...emptyNdaFormData, purpose: "共同開発の評価" };
-    expect(ndaFormHasUnsupportedPdfCharacters(data)).toBe(true);
+    expect(documentFieldsHaveUnsupportedPdfCharacters({ purpose: "共同開発の評価" })).toBe(true);
   });
 
   it("is false when every field is supported Latin/Cyrillic/Greek text", () => {
-    const data: NdaFormData = {
-      partyA: { name: "Société Générale", address: "29 Boulevard Haussmann" },
-      partyB: { name: "ООО Ромашка", address: "Москва" },
-      effectiveDate: "2026-09-01",
-      purpose: "evaluating a partnership",
-      termYears: "2",
-      governingState: "Delaware",
-    };
-    expect(ndaFormHasUnsupportedPdfCharacters(data)).toBe(false);
+    expect(
+      documentFieldsHaveUnsupportedPdfCharacters({
+        party_a_name: "Société Générale",
+        party_b_name: "ООО Ромашка",
+        governing_law: "Delaware",
+      })
+    ).toBe(false);
   });
 });

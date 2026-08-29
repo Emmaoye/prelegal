@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Home from "./page";
 import { setStoredUser } from "@/lib/auth";
-import { emptyNdaFormData, NdaFormData } from "@/lib/types";
+import { RenderedDocument } from "@/lib/document-types";
 
 vi.mock("@react-pdf/renderer", () => ({
   pdf: vi.fn(() => ({ toBlob: vi.fn().mockResolvedValue(new Blob()) })),
@@ -11,6 +11,7 @@ vi.mock("@react-pdf/renderer", () => ({
   Page: "mock-page",
   Text: "mock-text",
   View: "mock-view",
+  Link: "mock-link",
   StyleSheet: { create: (styles: unknown) => styles },
   Font: { register: vi.fn() },
 }));
@@ -23,19 +24,37 @@ vi.mock("next/navigation", () => ({
   useRouter: () => router,
 }));
 
-const completeFields: NdaFormData = {
-  partyA: { name: "Acme Robotics, Inc.", address: "500 Market St" },
-  partyB: { name: "Beta Innovations LLC", address: "200 Elm Ave" },
-  effectiveDate: "2026-09-01",
-  purpose: "evaluating a partnership",
-  termYears: "2",
-  governingState: "Delaware",
+const ndaDocument: RenderedDocument = {
+  slug: "mutual_nda",
+  name: "Mutual Non-Disclosure Agreement",
+  blocks: [
+    {
+      level: 0,
+      marker: "1.",
+      heading: "Introduction",
+      runs: [
+        { type: "text", text: "In connection with the " },
+        { type: "field", key: "purpose", label: "Purpose", value: "" },
+        { type: "text", text: "." },
+      ],
+    },
+  ],
 };
 
-function mockChatResponse(reply: string, fields: NdaFormData) {
+function mockChatResponse(
+  reply: string,
+  fields: Record<string, string>,
+  options: { documentType?: string | null; documentName?: string | null; document?: RenderedDocument | null } = {}
+) {
   (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
     ok: true,
-    json: async () => ({ reply, fields }),
+    json: async () => ({
+      reply,
+      fields,
+      documentType: options.documentType ?? "mutual_nda",
+      documentName: options.documentName ?? "Mutual Non-Disclosure Agreement",
+      document: options.document === undefined ? ndaDocument : options.document,
+    }),
   });
 }
 
@@ -49,63 +68,45 @@ describe("Home page", () => {
     vi.unstubAllGlobals();
   });
 
-  it("keeps the download button disabled until the chat reports every field filled", async () => {
-    const user = userEvent.setup();
+  it("shows no download button until the assistant confirms a document type", () => {
     render(<Home />);
-
-    const downloadButton = screen.getByRole("button", { name: /download nda as pdf/i });
-    expect(downloadButton).toBeDisabled();
-
-    mockChatResponse("Got it, what's next?", {
-      ...emptyNdaFormData,
-      partyA: completeFields.partyA,
-    });
-    await user.type(screen.getByLabelText("Message"), "Party A is Acme Robotics");
-    await user.click(screen.getByRole("button", { name: "Send" }));
-
-    expect(await screen.findByText("Got it, what's next?")).toBeInTheDocument();
-    expect(downloadButton).toBeDisabled();
-
-    mockChatResponse("All set!", completeFields);
-    await user.type(screen.getByLabelText("Message"), "Delaware governs it");
-    await user.click(screen.getByRole("button", { name: "Send" }));
-
-    await screen.findByText("All set!");
-    expect(downloadButton).toBeEnabled();
+    expect(screen.queryByRole("button", { name: /download/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/enable the download/i)).toBeInTheDocument();
   });
 
-  it("reflects chat-populated fields in the live preview", async () => {
+  it("shows the download button once the assistant confirms a document type", async () => {
     const user = userEvent.setup();
     render(<Home />);
 
-    mockChatResponse("Got it.", { ...emptyNdaFormData, partyA: completeFields.partyA });
-    await user.type(screen.getByLabelText("Message"), "Party A is Acme Robotics, Inc.");
+    mockChatResponse("Great, let's create a Mutual NDA. What's your organization's name?", {});
+    await user.type(screen.getByLabelText("Message"), "I need an NDA");
     await user.click(screen.getByRole("button", { name: "Send" }));
 
-    await screen.findByText("Got it.");
+    expect(await screen.findByRole("button", { name: /download mutual non-disclosure agreement as pdf/i })).toBeInTheDocument();
+  });
+
+  it("reflects chat-populated fields in the live preview and page heading", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    mockChatResponse("Got it, what's the purpose?", { party_a_name: "Acme Robotics, Inc." });
+    await user.type(screen.getByLabelText("Message"), "I need an NDA, we're Acme Robotics, Inc.");
+    await user.click(screen.getByRole("button", { name: "Send" }));
+
+    await screen.findByText("Got it, what's the purpose?");
     expect(screen.getByText("Acme Robotics, Inc.")).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Mutual Non-Disclosure Agreement" }).length).toBeGreaterThan(0);
   });
 
-  it("disables the download button again if a later response regresses a field", async () => {
+  it("returns focus to the message input after a response arrives", async () => {
     const user = userEvent.setup();
     render(<Home />);
 
-    mockChatResponse("All set!", completeFields);
-    await user.type(screen.getByLabelText("Message"), "here are all the details");
+    mockChatResponse("Got it, what's the purpose?", {});
+    await user.type(screen.getByLabelText("Message"), "I need an NDA");
     await user.click(screen.getByRole("button", { name: "Send" }));
 
-    const downloadButton = screen.getByRole("button", { name: /download nda as pdf/i });
-    await screen.findByText("All set!");
-    expect(downloadButton).toBeEnabled();
-
-    mockChatResponse("Sure, what's the new governing state?", {
-      ...completeFields,
-      governingState: "",
-    });
-    await user.type(screen.getByLabelText("Message"), "actually let's change the state");
-    await user.click(screen.getByRole("button", { name: "Send" }));
-
-    await screen.findByText("Sure, what's the new governing state?");
-    expect(downloadButton).toBeDisabled();
+    await screen.findByText("Got it, what's the purpose?");
+    expect(screen.getByLabelText("Message")).toHaveFocus();
   });
 });

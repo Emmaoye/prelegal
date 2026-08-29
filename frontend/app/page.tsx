@@ -1,19 +1,17 @@
 "use client";
 
-import DownloadNdaButton from "@/components/DownloadNdaButton";
-import NdaChat from "@/components/NdaChat";
-import NdaPreview from "@/components/NdaPreview";
-import { isNdaFormComplete } from "@/lib/types";
-import { ndaFormHasUnsupportedPdfCharacters } from "@/lib/pdf-font-support";
+import DownloadDocumentButton from "@/components/DownloadDocumentButton";
+import DocumentChat from "@/components/DocumentChat";
+import DocumentPreview from "@/components/DocumentPreview";
+import { documentFieldsHaveUnsupportedPdfCharacters } from "@/lib/pdf-font-support";
 import { useAuthGate, useLogout } from "@/lib/useAuthGate";
-import { useNdaChat } from "@/lib/useNdaChat";
+import { useDocumentChat } from "@/lib/useDocumentChat";
 
 export default function Home() {
   const user = useAuthGate();
   const logout = useLogout();
-  const { messages, fields, isSending, error, sendMessage } = useNdaChat();
-  const complete = isNdaFormComplete(fields);
-  const hasUnsupportedCharacters = ndaFormHasUnsupportedPdfCharacters(fields);
+  const { messages, documentName, fields, document, isSending, error, sendMessage } = useDocumentChat();
+  const hasUnsupportedCharacters = documentFieldsHaveUnsupportedPdfCharacters(fields);
 
   if (!user) return null;
 
@@ -27,20 +25,22 @@ export default function Home() {
       </div>
 
       <header className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Mutual NDA Creator</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{documentName ?? "Document Creator"}</h1>
         <p className="mt-1 text-sm text-gray-600">
-          Chat with the assistant to fill in the details, then download your NDA as a PDF.
+          Chat with the assistant to describe the agreement you need, fill in the details, then
+          download it as a PDF.
         </p>
       </header>
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
         <section>
-          <NdaChat messages={messages} isSending={isSending} error={error} onSend={sendMessage} />
+          <DocumentChat messages={messages} isSending={isSending} error={error} onSend={sendMessage} />
           <div className="mt-6">
-            <DownloadNdaButton data={fields} disabled={!complete} />
-            {!complete && (
-              <p className="mt-2 text-xs text-gray-500">
-                Answer the assistant&apos;s questions to enable the download.
+            {document ? (
+              <DownloadDocumentButton document={document} fields={fields} />
+            ) : (
+              <p className="text-xs text-gray-500">
+                Tell the assistant what document you need to enable the download.
               </p>
             )}
             {hasUnsupportedCharacters && (
@@ -54,7 +54,7 @@ export default function Home() {
         </section>
 
         <section className="h-fit rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-          <NdaPreview data={fields} />
+          <DocumentPreview document={document} fields={fields} />
         </section>
       </div>
     </main>
