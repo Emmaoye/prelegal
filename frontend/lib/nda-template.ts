@@ -1,4 +1,4 @@
-import { NdaFormData } from "./types";
+import { NdaFormData, PartyInfo, parseTermYears } from "./types";
 
 export const NDA_TITLE = "MUTUAL NON-DISCLOSURE AGREEMENT";
 
@@ -25,6 +25,10 @@ function fallback(value: string, placeholder: string): string {
   return value.trim() ? value.trim() : placeholder;
 }
 
+export function getPartyDisplayName(party: PartyInfo, label: "A" | "B"): string {
+  return party.name.trim() || `Party ${label}`;
+}
+
 export function getIntroParagraph(data: NdaFormData): string {
   const partyAName = fallback(data.partyA.name, "[Party A Name]");
   const partyAAddress = fallback(data.partyA.address, "[Party A Address]");
@@ -37,7 +41,8 @@ export function getIntroParagraph(data: NdaFormData): string {
 
 export function getNdaSections(data: NdaFormData): NdaSection[] {
   const purpose = fallback(data.purpose, "[Purpose of Disclosure]");
-  const termYears = fallback(data.termYears, "[Term]");
+  const parsedTermYears = parseTermYears(data.termYears);
+  const termYears = parsedTermYears !== null ? String(parsedTermYears) : "[Term]";
   const governingState = fallback(data.governingState, "[Governing State]");
 
   return [

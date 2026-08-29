@@ -5,10 +5,12 @@ import DownloadNdaButton from "@/components/DownloadNdaButton";
 import NdaForm from "@/components/NdaForm";
 import NdaPreview from "@/components/NdaPreview";
 import { emptyNdaFormData, isNdaFormComplete, NdaFormData } from "@/lib/types";
+import { ndaFormHasUnsupportedPdfCharacters } from "@/lib/pdf-font-support";
 
 export default function Home() {
   const [formData, setFormData] = useState<NdaFormData>(emptyNdaFormData);
   const complete = isNdaFormComplete(formData);
+  const hasUnsupportedCharacters = ndaFormHasUnsupportedPdfCharacters(formData);
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -28,6 +30,13 @@ export default function Home() {
             {!complete && (
               <p className="mt-2 text-xs text-gray-500">
                 Fill in all fields to enable the download.
+              </p>
+            )}
+            {hasUnsupportedCharacters && (
+              <p className="mt-2 text-xs text-amber-600">
+                Some characters you entered may not display correctly in the downloaded
+                PDF (the PDF font does not support every script, e.g. Chinese, Japanese,
+                Arabic, or Hebrew).
               </p>
             )}
           </div>

@@ -21,6 +21,17 @@ export const emptyNdaFormData: NdaFormData = {
   governingState: "",
 };
 
+/**
+ * Parses a term-years form value into a positive integer, or null if the
+ * value isn't one (covers zero, negative, decimal, and non-numeric input,
+ * which the number input's `min`/`type` attributes don't reliably block).
+ */
+export function parseTermYears(value: string): number | null {
+  if (!/^\d+$/.test(value.trim())) return null;
+  const parsed = Number(value);
+  return parsed > 0 ? parsed : null;
+}
+
 export function isNdaFormComplete(data: NdaFormData): boolean {
   return Boolean(
     data.partyA.name.trim() &&
@@ -29,7 +40,7 @@ export function isNdaFormComplete(data: NdaFormData): boolean {
       data.partyB.address.trim() &&
       data.effectiveDate &&
       data.purpose.trim() &&
-      data.termYears.trim() &&
+      parseTermYears(data.termYears) !== null &&
       data.governingState.trim()
   );
 }

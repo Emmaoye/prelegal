@@ -4,6 +4,7 @@ import {
   NDA_TITLE,
   getIntroParagraph,
   getNdaSections,
+  getPartyDisplayName,
 } from "@/lib/nda-template";
 
 export default function NdaPreview({ data }: { data: NdaFormData }) {
@@ -25,11 +26,14 @@ export default function NdaPreview({ data }: { data: NdaFormData }) {
       ))}
 
       <div className="mt-10 grid grid-cols-2 gap-8">
-        {[data.partyA, data.partyB].map((party, index) => (
-          <div key={index} className="space-y-8">
+        {([
+          [data.partyA, "A"],
+          [data.partyB, "B"],
+        ] as const).map(([party, label]) => (
+          <div key={label} className="space-y-8">
             <div className="border-t border-gray-400 pt-2">
               <p className="font-medium text-gray-900">
-                {party.name.trim() || `Party ${index === 0 ? "A" : "B"}`}
+                {getPartyDisplayName(party, label)}
               </p>
               <p className="mt-6 text-gray-500">Signature: ____________________</p>
               <p className="mt-2 text-gray-500">Date: ____________________</p>

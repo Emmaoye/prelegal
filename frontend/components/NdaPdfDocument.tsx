@@ -1,23 +1,38 @@
-import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Font, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { NdaFormData } from "@/lib/types";
 import {
   NDA_DISCLAIMER,
   NDA_TITLE,
   getIntroParagraph,
   getNdaSections,
+  getPartyDisplayName,
 } from "@/lib/nda-template";
+
+// react-pdf's built-in "Helvetica" only supports WinAnsi (Latin-1) encoding -
+// any character outside that range (Cyrillic, Greek, Vietnamese, etc.)
+// renders as garbled mojibake rather than an error. Noto Sans covers those
+// scripts (though not CJK/Arabic/etc. - see hasUnsupportedPdfCharacters,
+// which warns the user in that case instead of silently corrupting text).
+Font.register({
+  family: "NotoSans",
+  fonts: [
+    { src: "/fonts/NotoSans-Variable.ttf", fontWeight: 400 },
+    { src: "/fonts/NotoSans-Variable.ttf", fontWeight: 700 },
+  ],
+});
 
 const styles = StyleSheet.create({
   page: {
     padding: 56,
     fontSize: 10.5,
-    fontFamily: "Helvetica",
+    fontFamily: "NotoSans",
     lineHeight: 1.5,
     color: "#1f2937",
   },
   title: {
     fontSize: 15,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     textAlign: "center",
     marginBottom: 20,
     letterSpacing: 0.5,
@@ -28,7 +43,8 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 11,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     marginTop: 4,
     marginBottom: 4,
   },
@@ -44,7 +60,8 @@ const styles = StyleSheet.create({
     paddingTop: 6,
   },
   signatureName: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     marginBottom: 16,
   },
   signatureLine: {
@@ -79,12 +96,12 @@ export default function NdaPdfDocument({ data }: { data: NdaFormData }) {
 
         <View style={styles.signatureRow}>
           <View style={styles.signatureBlock}>
-            <Text style={styles.signatureName}>{data.partyA.name.trim() || "Party A"}</Text>
+            <Text style={styles.signatureName}>{getPartyDisplayName(data.partyA, "A")}</Text>
             <Text style={styles.signatureLine}>Signature: ____________________</Text>
             <Text style={styles.signatureLine}>Date: ____________________</Text>
           </View>
           <View style={styles.signatureBlock}>
-            <Text style={styles.signatureName}>{data.partyB.name.trim() || "Party B"}</Text>
+            <Text style={styles.signatureName}>{getPartyDisplayName(data.partyB, "B")}</Text>
             <Text style={styles.signatureLine}>Signature: ____________________</Text>
             <Text style={styles.signatureLine}>Date: ____________________</Text>
           </View>
