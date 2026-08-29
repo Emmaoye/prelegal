@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.db import init_db
 from app.routes.auth import router as auth_router
+from app.routes.nda_chat import router as nda_chat_router
 
 
 @asynccontextmanager
@@ -18,6 +19,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Prelegal", lifespan=lifespan)
 
 app.include_router(auth_router)
+app.include_router(nda_chat_router)
 
 
 @app.get("/api/health")
