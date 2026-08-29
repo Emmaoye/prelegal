@@ -13,3 +13,11 @@ def client(tmp_path, monkeypatch):
 
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def authed_client(client):
+    """A client that has signed up and is carrying a valid session cookie,
+    for tests of routes gated behind get_current_user."""
+    client.post("/api/auth/signup", json={"email": "user@example.com", "password": "hunter2"})
+    return client

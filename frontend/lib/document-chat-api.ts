@@ -18,12 +18,13 @@ export class ChatError extends Error {}
 export async function sendChatMessage(
   messages: ChatMessage[],
   documentType: string | null,
-  knownFields: DocumentFields
+  knownFields: DocumentFields,
+  conversationId: string
 ): Promise<ChatResult> {
   const response = await fetch("/api/chat/message", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages, documentType, knownFields }),
+    body: JSON.stringify({ messages, documentType, knownFields, conversationId }),
   });
 
   if (!response.ok) {

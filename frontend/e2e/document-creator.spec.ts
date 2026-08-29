@@ -101,14 +101,15 @@ async function sendChatMessage(page: Page, text: string) {
 
 test.describe("Document Creator", () => {
   test.beforeEach(async ({ page }) => {
-    // The document creator lives behind the fake login gate; seed a
-    // logged-in user so these tests can focus on chat/document behavior
-    // rather than login.
-    await page.addInitScript(() => {
-      window.localStorage.setItem(
-        "prelegal_user",
-        JSON.stringify({ id: 1, email: "e2e@example.com" })
-      );
+    // The document creator lives behind the login gate, which asks the
+    // backend who's signed in via the session cookie; mock that check so
+    // these tests can focus on chat/document behavior rather than login.
+    await page.route("**/api/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ id: 1, email: "e2e@example.com" }),
+      });
     });
   });
 

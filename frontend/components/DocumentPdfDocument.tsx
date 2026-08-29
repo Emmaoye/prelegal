@@ -62,13 +62,15 @@ const styles = StyleSheet.create({
     marginTop: 14,
     color: "#6b7280",
   },
-  disclaimer: {
-    marginTop: 32,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
+  disclaimerBanner: {
+    marginBottom: 16,
+    padding: 8,
+    backgroundColor: "#fdf6e3",
+    borderWidth: 1,
+    borderColor: "#ecad0a",
+    borderRadius: 3,
     fontSize: 8,
-    color: "#9ca3af",
+    color: "#032147",
   },
 });
 
@@ -99,6 +101,8 @@ export default function DocumentPdfDocument({
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>{document.name.toUpperCase()}</Text>
 
+        <Text style={styles.disclaimerBanner}>{DOCUMENT_DISCLAIMER}</Text>
+
         {document.blocks.map((block, index) => (
           <View key={index} style={{ marginLeft: block.level * 14 }}>
             <Text style={styles.paragraph}>
@@ -122,8 +126,6 @@ export default function DocumentPdfDocument({
             </View>
           ))}
         </View>
-
-        <Text style={styles.disclaimer}>{DOCUMENT_DISCLAIMER}</Text>
       </Page>
     </Document>
   );

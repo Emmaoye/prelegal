@@ -35,11 +35,16 @@ class ChatRequest(CamelModel):
     """Stateless per-turn chat request. `document_type` is None until the
     assistant has confirmed which of the catalog's document types the user
     wants; `known_fields` is whatever field values have been confirmed so
-    far, keyed by the field keys documents.py/document_templates.py exposes."""
+    far, keyed by the field keys documents.py/document_templates.py exposes.
+    `conversation_id` is a client-generated id for the whole chat, used only
+    to upsert this turn's document into the documents table for history -
+    optional so callers of get_chat_reply() that don't care about
+    persistence (e.g. tests) don't need to supply one."""
 
     document_type: str | None = None
     messages: list[ChatMessage] = Field(min_length=1)
     known_fields: dict[str, str] = Field(default_factory=dict)
+    conversation_id: str | None = None
 
 
 class TextRunOut(CamelModel):
@@ -85,3 +90,19 @@ class ChatResponse(CamelModel):
     reply: str
     fields: dict[str, str]
     document: RenderedDocumentOut | None
+
+
+class DocumentSummaryOut(CamelModel):
+    id: str
+    document_type: str
+    document_name: str
+    updated_at: str
+
+
+class DocumentDetailOut(CamelModel):
+    id: str
+    document_type: str
+    document_name: str
+    fields: dict[str, str]
+    document: RenderedDocumentOut
+    updated_at: str
